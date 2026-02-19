@@ -18,6 +18,8 @@
             color: #fce7f3;
             font-family: 'Plus Jakarta Sans', sans-serif;
             overflow-x: hidden;
+            margin: 0;
+            padding: 0;
         }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .handwritten { font-family: 'Dancing Script', cursive; }
@@ -42,7 +44,7 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
         }
 
-        .hidden-content { display: none; }
+        .hidden-content { display: none !important; }
 
         .fade-in {
             animation: fadeIn 1s ease forwards;
@@ -98,7 +100,7 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <!-- AUDIO ELEMENT - Sudah diganti ke sal.mp3 -->
+    <!-- AUDIO ELEMENT -->
     <audio id="bgMusic" loop preload="auto">
         <source src="sal.mp3" type="audio/mpeg">
     </audio>
@@ -115,24 +117,8 @@
         </div>
     </div>
 
-    <!-- Section 0: Time Lock -->
-    <div id="section-lock" class="hidden-content w-full max-w-md text-center">
-        <div class="glass-card p-10 border-pink-500/10">
-            <div class="mb-6 text-pink-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <h1 class="text-2xl font-bold mb-4 pink-gradient-text">Sabar Ya!</h1>
-            <p class="text-pink-200/60 mb-6 text-sm">Web ini masih terkunci. Datang lagi nanti pas kamu udah ulang tahun ya!</p>
-            <div id="countdown" class="mono text-pink-400 font-bold text-xl bg-pink-500/5 p-4 rounded-2xl border border-pink-500/10">
-                --:--:--:--
-            </div>
-        </div>
-    </div>
-
-    <!-- Section 1: Login -->
-    <div id="section-1" class="hidden-content w-full max-w-md transition-all">
+    <!-- Section 1: Login (Langsung Tampil Sekarang) -->
+    <div id="section-1" class="w-full max-w-md transition-all">
         <div class="glass-card p-10 text-center">
             <div class="mb-8 inline-block p-4 rounded-3xl bg-pink-500/10 text-pink-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -165,12 +151,12 @@
             </div>
             <p id="loading-text" class="text-[10px] uppercase tracking-[0.2em] opacity-80">DECRYPTING_BIRTHDAY_VAULT_...</p>
             <div class="w-full bg-pink-500/10 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-pink-500 h-full animate-[loading_3s_ease-in-out]" style="width: 100%"></div>
+                <div id="bar-loading" class="bg-pink-500 h-full w-0"></div>
             </div>
         </div>
     </div>
 
-    <!-- Section 3: Foto - Sudah diganti ke wony.jpg -->
+    <!-- Section 3: Foto -->
     <div id="section-3" class="hidden-content w-full max-w-2xl text-center">
         <div class="glass-card p-12 flex flex-col items-center">
             <div class="relative w-56 h-56 mb-10 group">
@@ -229,12 +215,9 @@
 
     <script>
         // --- CONFIGURATION ---
-        const TANGGAL_TARGET = "2024-02-25T00:00:00"; 
         const PASS_BENAR = "cimoy"; 
         const SPEED_KETIK = 70;
         const JUDUL_ULTAH = "Happy Birthday, Blaire! ✨";
-
-        // GANTI DETIK DI SINI (Detik mulainya lagu sal.mp3)
         const MULAI_DARI_DETIK = 15; 
 
         const lagu = document.getElementById('bgMusic');
@@ -242,33 +225,6 @@
         const ikonPlay = document.getElementById('playIcon');
         const ikonPause = document.getElementById('pauseIcon');
         const statusMusik = document.getElementById('music-status');
-
-        function checkTimeLock() {
-            const sekarang = new Date();
-            const target = new Date(TANGGAL_TARGET);
-
-            if (sekarang < target) {
-                document.getElementById('section-lock').classList.remove('hidden-content');
-                updateCountdown(target);
-                setInterval(() => updateCountdown(target), 1000);
-            } else {
-                document.getElementById('section-1').classList.remove('hidden-content');
-                document.getElementById('section-1').classList.add('fade-in');
-            }
-        }
-
-        function updateCountdown(target) {
-            const sekarang = new Date();
-            const selisih = target - sekarang;
-            if (selisih <= 0) { window.location.reload(); return; }
-
-            const d = Math.floor(selisih / (1000 * 60 * 60 * 24));
-            const h = Math.floor((selisih % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const m = Math.floor((selisih % (1000 * 60 * 60)) / (1000 * 60));
-            const s = Math.floor((selisih % (1000 * 60)) / 1000);
-
-            document.getElementById('countdown').innerText = `${d} Hari ${h}:${m}:${s}`;
-        }
 
         function cekPasswordSekarang() {
             const ketikan = document.getElementById('inputPass').value;
@@ -290,6 +246,7 @@
                 await lagu.play();
                 updateIkonMusik();
             } catch (err) {
+                console.log("Autoplay blocked or file missing");
                 statusMusik.innerText = "TAP ICON!";
             }
         }
@@ -313,34 +270,29 @@
 
         function efekLoading() {
             document.getElementById('section-1').classList.add('fade-out');
-            const loadingTexts = [
-                "AUTHENTICATING_USER_...",
-                "DECRYPTING_BIRTHDAY_VAULT_...",
-                "ACCESSING_PRIVATE_MEMORIES_..."
-            ];
-            let textIdx = 0;
-            const lText = document.getElementById('loading-text');
-            
-            const textInterval = setInterval(() => {
-                if (textIdx < loadingTexts.length - 1) {
-                    textIdx++;
-                    lText.innerText = loadingTexts[textIdx];
-                }
-            }, 1000);
-
             setTimeout(() => {
-                clearInterval(textInterval);
-                document.getElementById('section-1').style.display = 'none';
+                document.getElementById('section-1').classList.add('hidden-content');
                 document.getElementById('section-2').classList.remove('hidden-content');
                 document.getElementById('section-2').classList.add('fade-in');
-                setTimeout(munculinFoto, 3000);
+                
+                const bar = document.getElementById('bar-loading');
+                let width = 0;
+                const interval = setInterval(() => {
+                    if (width >= 100) {
+                        clearInterval(interval);
+                        setTimeout(munculinFoto, 500);
+                    } else {
+                        width += 2;
+                        bar.style.width = width + '%';
+                    }
+                }, 50);
             }, 500);
         }
 
         function munculinFoto() {
             document.getElementById('section-2').classList.add('fade-out');
             setTimeout(() => {
-                document.getElementById('section-2').style.display = 'none';
+                document.getElementById('section-2').classList.add('hidden-content');
                 document.getElementById('section-3').classList.remove('hidden-content');
                 document.getElementById('section-3').classList.add('fade-in');
             }, 500);
@@ -349,7 +301,7 @@
         function bukaSurat() {
             document.getElementById('section-3').classList.add('fade-out');
             setTimeout(() => {
-                document.getElementById('section-3').style.display = 'none';
+                document.getElementById('section-3').classList.add('hidden-content');
                 document.getElementById('section-4').classList.remove('hidden-content');
                 document.getElementById('section-4').classList.add('fade-in');
                 mulaiNgetik();
@@ -375,14 +327,6 @@
         }
 
         document.getElementById('inputPass').addEventListener('keypress', (e) => { if (e.key === 'Enter') cekPasswordSekarang(); });
-        window.onload = checkTimeLock;
     </script>
-    
-    <style>
-        @keyframes loading {
-            0% { width: 0%; }
-            100% { width: 100%; }
-        }
-    </style>
 </body>
 </html>
